@@ -1,4 +1,6 @@
-
+{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE LiberalTypeSynonyms #-}
+{-# LANGUAGE RankNTypes #-}
 module ListBasedCombinators (
     ListBasedCombinators.sequence,
     choice,
@@ -346,8 +348,8 @@ trimStart str = let
         drop (length spaces) str
 
 
-{-
-data ParseState s = ParseState (Int,s,Matches)
+
+newtype ParseState s = P (Int,s,Matches)
 
 -- https://wiki.haskell.org/Functor-Applicative-Monad_Proposal
 -- So this bit of boilerplate makes it work
@@ -361,39 +363,38 @@ instance Applicative ParseState where
 
 instance Monad ParseState where
 
-(>>=) :: forall a b. m a -> (a -> m b) -> m b 
 
-Sequentially compose two actions, passing any value produced by the first as an argument to the second.
-
-(>>) :: forall a b. m a -> m b -> m b infixl 1Source#
-
-Sequentially compose two actions, discarding any value produced by the first, like sequencing operators (such as the semicolon) in imperative languages.
-
-return :: a -> m a
-
-Inject a value into the monadic type.
-
-fail :: String -> m a    
+--Sequentially compose two actions, discarding any value produced by the first, like sequencing operators (such as the semicolon) in imperative languages.
+--  (>>) :: forall a b. m a -> m b -> m b 
+  (>>) = (*>)
 
 
-    mt >>=  p = 
+--Inject a value into the monadic type.
+--  return :: a -> m a
+  return str = P (0,str,[])
+
+
+--fail :: String -> m a    
+
+
+--Sequentially compose two actions, passing any value produced by the first as an argument to the second.
+ -- (>>=) :: forall a b. m a -> (a -> m b) -> m b 
+
+  mt >>=  p = 
         let
-            ParseState (st1,str2,m1) = mt                        
+            P (st1,str2,m1) = mt                        
         in            
             if st1==1 then
                 let
-                    ParseState (st2,str3,m2) = p str2
+                    P (st2,str3,m2) = p str2
                 in
-                    ParseState (st2,str3,m1++m2)                                
+                    P (st2,str3,m1++m2)                                
             else 
                 let
-                    ParseState (st2,str3,m2) = p str2
+                    P (st2,str3,m2) = p str2
                 in
-                    ParseState (0,str3,m1)                  
+                    P (0,str3,m1)                  
                 
         
-    return str = ParseState (0,str,[])        
 
-    (>>) = (*>)
     
--}
