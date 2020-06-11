@@ -28,8 +28,6 @@ module ListBasedCombinators (
 ) where
 
 import Text.Regex.PCRE
-import Control.Monad
-import Control.Applicative
 
 type Status = Integer
 type Matches = [Match]
