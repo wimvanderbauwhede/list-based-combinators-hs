@@ -27,6 +27,8 @@ module ListBasedCombinators (
     LComb(..)
 ) where
 
+import Control.Applicative
+import Control.Monad
 import Text.Regex.PCRE
 
 type Status = Integer
