@@ -31,7 +31,7 @@ import Text.Regex.PCRE
 
 type Status = Integer
 type Matches = [Match]
-data Match = Match String | TaggedMatch String [Match] | UndefinedMatch deriving (Show)
+data Match = Match String | TaggedMatches String [Match] | UndefinedMatch deriving (Show)
 
 
 data LComb = Seq [LComb] | Comb (String -> (Status,String,Matches)) | Tag String LComb -- deriving (Show)
@@ -70,7 +70,7 @@ apply p str = case p of
             p'' str
     Tag k pp -> let
                 (status, str2, mms) = apply pp str
-                matches = [TaggedMatch k mms] 
+                matches = [TaggedMatches k mms] 
             in
                 (status, str2, matches)
 
