@@ -11,19 +11,27 @@ import ListBasedCombinators (
         parens,
         char,
         sepBy,
+        sepByChar,
         oneOf,
         choice,
         parens,
-        LComb(..)
+        getParseTree,
+        LComb(..),
+        MTup(..)
     )
 
 main :: IO ()
 main = do
     print $ apply test_parser "   hello world   spaces =  7188 ."
-    print $ apply type_parser type_str    
+    let
+        MTup (tpst,tpstr,tpms) = apply type_parser type_str    
+    print tpms
     print $ apply (sepBy (symbol "=>") word) "Int => Bool => String"    
     print $ apply (sequence [oneOf "aeiou", word]) "aTest"    
-    print $ apply (sequence [word, symbol "=", word,parens word]) "answer = hello(world)"  
+    let
+        MTup (st,str,ms) = apply (sequence [word, symbol "=", word,parens word]) "answer = hello(world)"  
+    print $ (st,str,ms)        
+    print $ getParseTree tpms
 
 type_str = "integer(kind=8), "
 test_parser = 

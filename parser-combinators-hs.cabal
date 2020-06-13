@@ -33,7 +33,7 @@ library
   hs-source-dirs:
       src
   build-depends:
-      base >=4.7 && <5, regex-pcre
+      base >=4.7 && <5, regex-pcre, containers
   default-language: Haskell2010
 
 executable parser-combinators-hs-exe

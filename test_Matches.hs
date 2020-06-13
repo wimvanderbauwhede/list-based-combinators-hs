@@ -8,13 +8,6 @@ data Match = Match String | TaggedMatches String Matches | UndefinedMatch derivi
 
 -- So we have a potentially nested structure ms 
 
-_remove_undefined_values ms = let
-        ms'  = filter (/=UndefinedMatch) ms 
-    in 
-        map (\m -> case m of
-            Match _ -> m
-            TaggedMatches t ms'' -> TaggedMatches t (_remove_undefined_values ms'')
-            ) ms'
 
 ms :: Matches
 ms =
@@ -45,6 +38,16 @@ ms =
 -- But that means that we go through the tree again, and we combine all  TaggedMatches in the Matches list into a Map
 -- So in a way there's no need to remove the UndefinedMatch, rather we only keep the TaggedMatches
 -- So I guess the output will 
+
+
+_remove_undefined_values ms = let
+        ms'  = filter (/=UndefinedMatch) ms 
+    in 
+        map (\m -> case m of
+            Match _ -> m
+            TaggedMatches t ms'' -> TaggedMatches t (_remove_undefined_values ms'')
+            ) ms'
+
 _tagged_matches_only :: Matches -> Matches -- H.Map String TaggedEntry 
 _tagged_matches_only ms = let
         ms' =  filter (\m -> case m of 
@@ -78,6 +81,14 @@ _tagged_matches_to_map ms = let
                 Val $ concatMap (\(Match str) -> [str]) ms
             else 
                 ValMap $ foldl (\hm (TaggedMatches t ms') -> H.insert t ( _tagged_matches_to_map ms') hm) H.empty ms
+
+                
+getParseTree ms = let
+        ms' = _remove_undefined_values ms
+        ms'' =  _tagged_matches_only ms'
+        ms''' = _tagged_matches_to_map ms''
+    in
+        (\(ValMap vm) -> vm) ms'''
         
 main = do
     print ms
