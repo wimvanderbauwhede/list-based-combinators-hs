@@ -1,6 +1,4 @@
-{-# LANGUAGE TypeSynonymInstances #-}
-{-# LANGUAGE LiberalTypeSynonyms #-}
-{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE LambdaCase #-}
 module ListBasedCombinators (
     ListBasedCombinators.sequence,
     choice,
@@ -54,7 +52,8 @@ data LComb = Seq [LComb] | Comb (String -> MTup String) | Tag String LComb -- de
 -- unM (Match ms) = ms
 -- unM (TMatch _ ms) = ms
 -- unM [UndefinedMatch] = []
-    
+
+-- I could of course use Seq instead, but I prefer the function visually    
 sequence :: [LComb] -> LComb
 sequence pseq = 
     Comb $ \str -> let
@@ -438,7 +437,8 @@ _tagged_matches_only ms = let
 
 -- data MatchTup = (String, [MatchTup])
 
-data TaggedEntry = Val [String] | ValMap (H.Map String TaggedEntry) deriving (Show)
+data TaggedEntry = Val [String] | ValMap [(String, TaggedEntry)] deriving (Show)
+-- data TaggedEntry = Val [String] | ValMap (H.Map String TaggedEntry) deriving (Show)
 
 {-
 A list of TaggedMatches must be translated into a Map of TaggedEntry's
@@ -448,15 +448,18 @@ hm =
 _tagged_matches_to_map ::  Matches -> TaggedEntry 
 _tagged_matches_to_map ms = let
 -- if there are no TaggedMatches in ms, we should unpack the String from the Match and pack it into a Val [String]
-        ms' =  filter (\m -> case m of 
+        ms' =  filter (\case  
                         TaggedMatches _ _ -> True
                         _ -> False
                         ) ms
         in
-            if length ms' == 0 then 
+            if null ms'  then 
                 Val $ concatMap (\(Match str) -> [str]) ms
             else 
-                ValMap $ foldl (\hm (TaggedMatches t ms'') -> H.insert t ( _tagged_matches_to_map ms'') hm) H.empty ms'
+                ValMap $ foldl (\hm (TaggedMatches t ms'') -> 
+                    (t, _tagged_matches_to_map ms''):hm) [] ms'
+                -- ValMap $ foldl (\hm (TaggedMatches t ms'') -> 
+                --     H.insert t ( _tagged_matches_to_map ms'') hm) H.empty ms'
 
                 
 getParseTree ms = let
@@ -466,7 +469,7 @@ getParseTree ms = let
     in
         case ms''' of
             ValMap vm -> vm
-            Val v -> H.empty
+            Val v -> []
 
 -- ================================================================================================================================
 -- Monad stuff, just for fun

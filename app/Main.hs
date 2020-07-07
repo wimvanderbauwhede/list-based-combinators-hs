@@ -30,14 +30,14 @@ main = do
     print $ apply (sequence [oneOf "aeiou", word]) "aTest"    
     let
         MTup (st,str,ms) = apply (sequence [word, symbol "=", word,parens word]) "answer = hello(world)"  
-    print $ (st,str,ms)        
+    print (st,str,ms)        
     print $ getParseTree tpms
 
 type_str = "integer(kind=8), "
 test_parser = 
   sequence [
     whiteSpace,
-    (Tag "Type" word), 
+    Tag "Type" word, 
     word,
     word,
     symbol "=",
@@ -53,7 +53,7 @@ type_parser =
                 sequence [
                     symbol "kind",
                     symbol "=",
-                    (Tag "Kind" natural)
+                    Tag "Kind" natural
                 ] 
             ]
         ]
