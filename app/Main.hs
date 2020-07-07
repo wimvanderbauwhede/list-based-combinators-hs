@@ -58,4 +58,11 @@ type_parser =
             ]
         ]
 
-    
+-- could I do something like:
+-- Tag (forall a . a ) LComb
+-- and a being for example (\x -> Var x)
+-- What is missing of course is that in the end the tag will apply to either String or [String] assuming we can pass this on to
+-- data Match = Match String | TaggedMatches (forall a . a) [Match] | UndefinedMatch deriving (Eq,Show)    
+-- And that means we need to find a way to go from the String to the type expected by the Term alternative
+-- So we actually want String -> Term as the signature, perhaps. And shift the question to how we can go from String to the thing in the alternative
+-- I guess it will be easier to write a dedicated TaggedEntry to Term function
