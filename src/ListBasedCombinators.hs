@@ -28,7 +28,8 @@ module ListBasedCombinators (
     getParseTree,   
     LComb(..),
     MTup(..),
-    Match(..)
+    Match(..),
+    TaggedEntry(..)
 ) where
 
 import Control.Applicative
@@ -133,28 +134,38 @@ symbol :: String -> LComb
 -- As in Parsec, parses a literal and removes trailing whitespace
 symbol lit_str = 
     -- lit_str =~  s/(\W)/\\$1/g FIXME! Escape non-word characters in the literal string
-    Comb $  \str -> let
-        status=0
-        (b,m,str')  = str =~ ("^\\s*"++lit_str++"\\s*") :: (String,String,String)
-      in
-        if m/=""
-            then
-                MTup (1,str', [Match lit_str])
-            else
-                MTup (0,str, [UndefinedMatch])
+    let
+        esc_lit_str = foldl esc_non_word_chars "" lit_str
+        -- esc_non_word_chars acc c 
+        --     | c `elem` (['a' .. 'z']++['A' .. 'Z']++['0' .. '9']++['_']) = acc++[c]
+        --     | otherwise = acc++['\\',c]
+        esc_non_word_chars acc c 
+            | c `elem` ['+','-','*','.','?','$','/','\\','^','|','{','}','[',']','(',')','<','>'] = acc++['\\',c]
+            | otherwise = acc++[c]
+
+    in
+        Comb $  \str -> let
+            status=0
+            (b,m,str')  = str =~ ("^\\s*"++esc_lit_str++"\\s*") :: (String,String,String)
+        in
+            if m/=""
+                then
+                    MTup (1,str', [Match lit_str])
+                else
+                    MTup (0,str, [UndefinedMatch])
 
 parens :: LComb -> LComb
 parens p =
     Comb $ \str -> let
             MTup (status, str3, ch) = apply (char '(') str
         in
-            if (status==1) then
+            if status==1 then
                 let
                     str4 = trimStart str3 
                     MTup (st,str4s,matches)= apply p str4
                     status'=status*st
                 in
-                    if (status'==1) then
+                    if status'==1 then
                         let
                             MTup (st, str5, ch)=apply (char ')') str4s
                             status'' = status'*st
@@ -176,7 +187,7 @@ char ch =
     Comb $ \str -> let
             c:cs = str
         in            
-            if (c == ch) 
+            if c == ch
                 then
                     MTup (1,cs,[Match [ch]])
                 else
@@ -457,7 +468,7 @@ _tagged_matches_to_map ms = let
                 Val $ concatMap (\(Match str) -> [str]) ms
             else 
                 ValMap $ foldl (\hm (TaggedMatches t ms'') -> 
-                    (t, _tagged_matches_to_map ms''):hm) [] ms'
+                    hm++[(t, _tagged_matches_to_map ms'')]) [] ms'
                 -- ValMap $ foldl (\hm (TaggedMatches t ms'') -> 
                 --     H.insert t ( _tagged_matches_to_map ms'') hm) H.empty ms'
 
