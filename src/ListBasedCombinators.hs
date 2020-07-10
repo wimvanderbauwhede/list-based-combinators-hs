@@ -553,7 +553,7 @@ Better Tagging
 
 e.g. sequence [word,natural]
 
-mkPow $ sequence [
+Tag mkPow sequence [
 	Tag mkVar word,
 	symbol "^", 
 	Tag mkConst natural
@@ -580,11 +580,13 @@ Tag (LComb -> a) LComb
 
 so 
 
-data LComb a = Seq [LComb a] | Comb (String -> MTup a) | Tag (Match a -> a) (LComb a) 
+data LComb a = Seq [LComb a] | Comb (String -> MTup a) | Tag ([Match a] -> a) (LComb a) 
 
 and
 
-data Match a = Match String | TaggedMatches (Match a -> a) [Match a] | UndefinedMatch deriving (Eq,Show)
+data Match a = Match String | TaggedMatches ([Match a] -> a) [Match a] | UndefinedMatch deriving (Eq,Show)
+
+
 
 e.g. sequence [word,natural]
 
@@ -596,7 +598,7 @@ Tag mkPow sequence [
 
 After applying this we get
 
-    TaggedMatches mkPow [
+ms =     TaggedMatches mkPow [
         TaggedMatches mkVar [Match "x"],
         Match "^",
         TaggedMatches mkConst [Match "42"]
@@ -604,6 +606,7 @@ After applying this we get
 
 TaggedMatches mkConst [Match "42"] is unpacked to have mkConst return a Term
 Which means that 
+
 mkConst :: [Match a] -> a
 mkConst [Match x] = Const (read x)
 
@@ -626,4 +629,10 @@ getTaggedMatches ms = let
                         ) ms
         in                        
             map (TaggedMatches mkT m -> mkT m) tms
+
+The question is, what have we gained? I suppose we just run 
+
+ts = getTaggedMatches [ms] 
+
+and that should give me the AST
 -}
