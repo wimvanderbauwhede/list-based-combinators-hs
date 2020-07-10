@@ -38,14 +38,14 @@ import Text.Regex.PCRE
 import qualified Data.Map.Strict as H
 
 type Status = Integer
-type Matches = [Match]
+type Matches s = [Match s]
 -- (Status,String,Matches)
-emptyMatches :: Matches
+emptyMatches :: Matches s 
 emptyMatches = []
-newtype MTup s = MTup (Int, s, Matches) deriving (Show)
+newtype MTup s = MTup (Int, String, Matches s) deriving (Show)
 
 
-data Match = Match String | TaggedMatches String [Match] | UndefinedMatch deriving (Eq,Show)
+data Match a = Match a | TaggedMatches a [Match a] | UndefinedMatch deriving (Eq,Show)
 
 
 data LComb = Seq [LComb] | Comb (String -> MTup String) | Tag String LComb -- deriving (Show)
@@ -434,7 +434,7 @@ _remove_undefined_values ms = let
             TaggedMatches t ms'' -> TaggedMatches t (_remove_undefined_values ms'')
             ) ms'
 
-_tagged_matches_only :: Matches -> Matches -- H.Map String TaggedEntry 
+_tagged_matches_only :: Matches a -> Matches a
 _tagged_matches_only ms = let
         ms' =  filter (\m -> case m of 
                         TaggedMatches _ _ -> True
@@ -448,7 +448,7 @@ _tagged_matches_only ms = let
 
 -- data MatchTup = (String, [MatchTup])
 
-data TaggedEntry = Val [String] | ValMap [(String, TaggedEntry)] deriving (Show)
+data TaggedEntry a = Val [a] | ValMap [(a, TaggedEntry a)] deriving (Show)
 -- data TaggedEntry = Val [String] | ValMap (H.Map String TaggedEntry) deriving (Show)
 
 {-
@@ -456,7 +456,7 @@ A list of TaggedMatches must be translated into a Map of TaggedEntry's
 hm = 
         
 -}
-_tagged_matches_to_map ::  Matches -> TaggedEntry 
+_tagged_matches_to_map ::  Matches a -> TaggedEntry a
 _tagged_matches_to_map ms = let
 -- if there are no TaggedMatches in ms, we should unpack the String from the Match and pack it into a Val [String]
         ms' =  filter (\case  
