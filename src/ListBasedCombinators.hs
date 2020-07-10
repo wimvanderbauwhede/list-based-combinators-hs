@@ -48,7 +48,7 @@ newtype MTup s = MTup (Int, String, Matches s) deriving (Show)
 data Match a = Match a | TaggedMatches a [Match a] | UndefinedMatch deriving (Eq,Show)
 
 
-data LComb = Seq [LComb] | Comb (String -> MTup String) | Tag String LComb -- deriving (Show)
+data LComb = Seq [LComb] | Comb (String -> MTup String) | Tag String (LComb) -- deriving (Show)
 
 -- unM (Match ms) = ms
 -- unM (TMatch _ ms) = ms
@@ -547,3 +547,83 @@ after mt p =
             in
                 MTup (0,str3,m1)   
     
+{-
+
+Better Tagging
+
+e.g. sequence [word,natural]
+
+mkPow $ sequence [
+	Tag mkVar word,
+	symbol "^", 
+	Tag mkConst natural
+]
+
+But of course Pow is 
+Pow Term Int 
+so mkPow :: LComb -> Pow Term Int
+and Var is 
+Var String 
+so 
+mkVar :: LComb -> Var String
+and Const is 
+Const Int
+mkConst :: LComb -> Var Int
+
+and in general a function LComb -> Term
+
+Tag (LComb -> Term) LComb
+
+and in general 
+
+Tag (LComb -> a) LComb
+
+so 
+
+data LComb a = Seq [LComb a] | Comb (String -> MTup a) | Tag (Match a -> a) (LComb a) 
+
+and
+
+data Match a = Match String | TaggedMatches (Match a -> a) [Match a] | UndefinedMatch deriving (Eq,Show)
+
+e.g. sequence [word,natural]
+
+Tag mkPow sequence [
+	Tag mkVar word,
+	symbol "^", 
+	Tag mkConst natural
+]
+
+After applying this we get
+
+    TaggedMatches mkPow [
+        TaggedMatches mkVar [Match "x"],
+        Match "^",
+        TaggedMatches mkConst [Match "42"]
+    ]
+
+TaggedMatches mkConst [Match "42"] is unpacked to have mkConst return a Term
+Which means that 
+mkConst :: [Match a] -> a
+mkConst [Match x] = Const (read x)
+
+So we'll get
+
+mkPow :: [Match a] -> a 
+mkPow ms = let
+    [v,e] = getTaggedMatches ms
+in
+    Pow v e
+
+mkAdd :: [Match a] -> a 
+mkAdd = Add $ getTaggedMatches 
+    
+getTaggedMatches :: [Match a] -> [a]
+getTaggedMatches ms = let
+        tms = filter (\case 
+                            TaggedMatches _ _ -> True
+                            _ -> False
+                        ) ms
+        in                        
+            map (TaggedMatches mkT m -> mkT m) tms
+-}
